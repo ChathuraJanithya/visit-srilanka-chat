@@ -189,7 +189,7 @@ export function ChatCanvas() {
         </div>
       </div>
 
-      {/* //@ts-ignore */}
+      {/* @ts-ignore */}
       <ScrollToBottom containerRef={messagesContainerRef} />
 
       {isMobile ? (

@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { ChatSidebar } from "@/components/chat-sidebar";
-import { ChatHeader } from "@/components/chat-header";
-import { ChatCanvas } from "@/components/chat-canvas";
-import { SidebarProvider, useSidebarContext } from "@/components/ui/sidebar";
-import { MobileOverlay } from "@/components/mobile-overlay";
 import { useSwipe } from "@/hooks/use-swipe";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useChat } from "@/context/chat-context";
+import { ChatHeader } from "@/components/chat-header";
+import { ChatCanvas } from "@/components/chat-canvas";
+import { useParams, useRouter } from "next/navigation";
+import { ChatSidebar } from "@/components/chat-sidebar";
+import { SidebarProvider, useSidebarContext } from "@/components/ui/sidebar";
 
 function ChatPage() {
   const { id } = useParams();
@@ -17,9 +16,6 @@ function ChatPage() {
   const router = useRouter();
   const { isOpen, setIsOpen } = useSidebarContext();
   const isMobile = useIsMobile();
-
-  console.log("ChatPage rendered", chats);
-  console.log("Current chat ID:", id);
 
   useEffect(() => {
     // Find the chat in our context
