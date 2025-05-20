@@ -17,11 +17,12 @@ import { useRouter } from "next/navigation";
 //import { formatDistanceToNow } from "date-fns";
 import { useChat } from "@/context/chat-context";
 import { useIsMobile } from "@/hooks/use-mobile";
+import clsx from "clsx";
 
 export function ChatSidebar() {
   const { chats, currentChat, createNewChat } = useChat();
   const router = useRouter();
-  const { setIsOpen } = useSidebarContext();
+  const { setIsOpen, isOpen } = useSidebarContext();
   const isMobile = useIsMobile();
 
   const handleSelectChat = (chatId: string) => {
@@ -46,14 +47,16 @@ export function ChatSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-2">
-        <Button
-          variant="outline"
-          className="w-full justify-start gap-2 shadow-sm"
-          onClick={handleNewChat}
-        >
-          <Plus className="h-4 w-4" />
-          <span>New chat</span>
-        </Button>
+        {isOpen && (
+          <Button
+            variant="outline"
+            className="w-full justify-center gap-2 shadow-sm"
+            onClick={handleNewChat}
+          >
+            <Plus className="h-4 w-4" />
+            <span>New chat</span>
+          </Button>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <div className="px-2 py-2">
@@ -67,7 +70,12 @@ export function ChatSidebar() {
               <SidebarMenuButton asChild isActive={currentChat?.id === chat.id}>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start text-sm font-normal gap-2 h-auto py-3"
+                  className={clsx(
+                    "w-full justify-start text-sm my-0.5 font-normal gap-2 h-auto  py-3",
+                    currentChat?.id === chat.id
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-muted-foreground"
+                  )}
                   onClick={() => handleSelectChat(chat.id)}
                 >
                   <MessageSquare className="h-4 w-4 shrink-0" />

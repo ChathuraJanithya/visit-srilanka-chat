@@ -12,23 +12,26 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useChat } from "@/context/chat-context";
 
 function ChatPage() {
-  const { chatId } = useParams();
+  const { id } = useParams();
   const { setCurrentChat, chats } = useChat();
   const router = useRouter();
   const { isOpen, setIsOpen } = useSidebarContext();
   const isMobile = useIsMobile();
 
+  console.log("ChatPage rendered", chats);
+  console.log("Current chat ID:", id);
+
   useEffect(() => {
     // Find the chat in our context
-    const chat = chats.find((c) => c.id === chatId);
+    const chat = chats.find((c) => c.id === id);
 
     if (chat) {
       setCurrentChat(chat);
     } else {
       // If chat doesn't exist, redirect to home
-      //router.push("/");
+      router.push("/chat");
     }
-  }, [chatId, chats, setCurrentChat, router]);
+  }, [id, chats, setCurrentChat, router]);
 
   // Add swipe gestures for mobile
   const { handlers } = useSwipe({
@@ -50,7 +53,7 @@ function ChatPage() {
       {...handlers}
     >
       <ChatSidebar />
-      <MobileOverlay />
+      {/*   <MobileOverlay /> */}
       <div className="flex flex-1 flex-col">
         <ChatHeader />
         <ChatCanvas />

@@ -1,4 +1,4 @@
-import type { ChatSession } from "@/types/chat"
+import type { ChatSession } from "@/types/chat";
 
 export const mockChats: ChatSession[] = [
   {
@@ -6,6 +6,32 @@ export const mockChats: ChatSession[] = [
     title: "Next.js Help",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
     messages: [
+      {
+        id: "msg-1-1",
+        content: "What are the advantages of using Next.js?",
+        role: "user",
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      },
+      {
+        id: "msg-1-2",
+        content:
+          "Next.js offers several advantages:\n\n1. **Server-side Rendering (SSR)** - Improves performance and SEO\n2. **Static Site Generation (SSG)** - Fast page loads and reduced server load\n3. **API Routes** - Build API endpoints as part of your Next.js app\n4. **File-based Routing** - Simplified routing based on file structure\n5. **Built-in Image Optimization** - Automatically optimizes images for better performance\n6. **Zero Config** - Works out of the box with sensible defaults\n7. **TypeScript Support** - First-class TypeScript support\n8. **Fast Refresh** - Instant feedback during development",
+        role: "assistant",
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2 + 1000 * 30), // 2 hours ago + 30 seconds
+      },
+      {
+        id: "msg-1-1",
+        content: "What are the advantages of using Next.js?",
+        role: "user",
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      },
+      {
+        id: "msg-1-2",
+        content:
+          "Next.js offers several advantages:\n\n1. **Server-side Rendering (SSR)** - Improves performance and SEO\n2. **Static Site Generation (SSG)** - Fast page loads and reduced server load\n3. **API Routes** - Build API endpoints as part of your Next.js app\n4. **File-based Routing** - Simplified routing based on file structure\n5. **Built-in Image Optimization** - Automatically optimizes images for better performance\n6. **Zero Config** - Works out of the box with sensible defaults\n7. **TypeScript Support** - First-class TypeScript support\n8. **Fast Refresh** - Instant feedback during development",
+        role: "assistant",
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2 + 1000 * 30), // 2 hours ago + 30 seconds
+      },
       {
         id: "msg-1-1",
         content: "What are the advantages of using Next.js?",
@@ -28,7 +54,8 @@ export const mockChats: ChatSession[] = [
     messages: [
       {
         id: "msg-2-1",
-        content: "I have an important presentation tomorrow. Can you wish me luck?",
+        content:
+          "I have an important presentation tomorrow. Can you wish me luck?",
         role: "user",
         timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
       },
@@ -61,14 +88,14 @@ export const mockChats: ChatSession[] = [
       },
     ],
   },
-]
+];
 
 // Function to generate a unique chat ID
 export function generateChatId(): string {
-  return `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+  return `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 // Function to get a chat by ID
 export function getChatById(id: string): ChatSession | undefined {
-  return mockChats.find((chat) => chat.id === id)
+  return mockChats.find((chat) => chat.id === id);
 }

@@ -1,6 +1,5 @@
 import type { ChatMessage } from "@/types/chat";
 import { cn } from "@/lib/utils";
-//import { formatDistanceToNow } from "date-fns"
 
 interface ChatMessageProps {
   message: ChatMessage;
@@ -8,9 +7,6 @@ interface ChatMessageProps {
 
 export function ChatMessageItem({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
-
-  // Format the timestamp to show how long ago the message was sent
-  // const timeAgo = formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })
 
   return (
     <div
@@ -32,7 +28,6 @@ export function ChatMessageItem({ message }: ChatMessageProps) {
             {line}
           </p>
         ))}
-        {/* <span className="text-[10px] opacity-70 self-end mt-1">{timeAgo}</span> */}
       </div>
     </div>
   );
