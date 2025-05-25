@@ -1,11 +1,20 @@
 "use client";
 
-import { ChevronDown, Lock, Plus, Settings, LogIn } from "lucide-react";
+import {
+  ChevronDown,
+  Lock,
+  Plus,
+  Settings,
+  LogIn,
+  LogOut,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useChat } from "@/context/chat-context";
+import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -19,22 +28,58 @@ import {
 export function ChatHeader() {
   const isMobile = useIsMobile();
   const { currentChat, createNewChat } = useChat();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <header className="flex h-14 items-center justify-between border-b px-4">
       <div className="flex items-center gap-2">
         <SidebarTrigger />
-        {/*  <h1 className="text-lg font-medium truncate max-w-[200px]">{currentChat ? currentChat.title : "AI Chat"}</h1> */}
+        {/* <h1 className="text-lg font-medium truncate max-w-[200px]">
+          {currentChat ? currentChat.title : "AI Chat"}
+        </h1> */}
       </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />
 
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/login">
-            <LogIn className="mr-2 h-4 w-4" />
-            <span>Login</span>
-          </Link>
-        </Button>
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <User className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">{user.email}</span>
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/login">
+              <LogIn className="mr-2 h-4 w-4" />
+              <span>Login</span>
+            </Link>
+          </Button>
+        )}
 
         {isMobile ? (
           <DropdownMenu>
@@ -58,16 +103,23 @@ export function ChatHeader() {
                 <span>Clear History</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/login">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  <span>Login</span>
-                </Link>
-              </DropdownMenuItem>
+              {user ? (
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem asChild>
+                  <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    <span>Login</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <></>
+          user && <></>
         )}
       </div>
     </header>

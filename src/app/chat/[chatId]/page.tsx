@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { ChatHeader } from "@/components/chat-header";
 import { ChatCanvas } from "@/components/chat-canvas";
@@ -12,12 +12,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useChat } from "@/context/chat-context";
 import { useAuth } from "@/context/auth-context";
 
-function ChatApp() {
-  const { isOpen, setIsOpen } = useSidebarContext();
-  const isMobile = useIsMobile();
-  const { createNewChat, currentChat, chats } = useChat();
+function ChatPage() {
+  const { chatId } = useParams();
+  const { setCurrentChat, chats } = useChat();
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { isOpen, setIsOpen } = useSidebarContext();
+  const isMobile = useIsMobile();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -26,12 +27,19 @@ function ChatApp() {
     }
   }, [user, loading, router]);
 
-  // If there are chats but no current chat is selected, redirect to the first chat
   useEffect(() => {
-    if (user && chats.length > 0 && !currentChat) {
-      router.push(`/chat/${chats[0].id}`);
+    if (user && chats.length > 0) {
+      // Find the chat in our context
+      const chat = chats.find((c) => c.id === chatId);
+
+      if (chat) {
+        setCurrentChat(chat);
+      } else {
+        // If chat doesn't exist, redirect to home
+        router.push("/");
+      }
     }
-  }, [chats, currentChat, router, user]);
+  }, [chatId, chats, setCurrentChat, router, user]);
 
   // Add swipe gestures for mobile
   const { handlers } = useSwipe({
@@ -74,10 +82,10 @@ function ChatApp() {
   );
 }
 
-export default function Home() {
+export default function ChatPageWithSidebar() {
   return (
     <SidebarProvider defaultIsOpen={false}>
-      <ChatApp />
+      <ChatPage />
     </SidebarProvider>
   );
 }
