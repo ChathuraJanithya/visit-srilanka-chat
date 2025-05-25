@@ -1,19 +1,11 @@
 "use client";
 
-import {
-  ChevronDown,
-  Lock,
-  Plus,
-  Settings,
-  LogIn,
-  LogOut,
-  User,
-} from "lucide-react";
+import { ChevronDown, Lock, Settings, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useChat } from "@/context/chat-context";
+//import { useChat } from "@/context/chat-context";
 import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import {
@@ -27,7 +19,7 @@ import {
 
 export function ChatHeader() {
   const isMobile = useIsMobile();
-  const { currentChat, createNewChat } = useChat();
+  //const { currentChat, createNewChat } = useChat();
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {

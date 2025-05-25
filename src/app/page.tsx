@@ -6,7 +6,7 @@ import { ChatSidebar } from "@/components/chat-sidebar";
 import { ChatHeader } from "@/components/chat-header";
 import { ChatCanvas } from "@/components/chat-canvas";
 import { SidebarProvider, useSidebarContext } from "@/components/ui/sidebar";
-import { MobileOverlay } from "@/components/mobile-overlay";
+/* import { MobileOverlay } from "@/components/mobile-overlay"; */
 import { useSwipe } from "@/hooks/use-swipe";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useChat } from "@/context/chat-context";
@@ -15,7 +15,7 @@ import { useAuth } from "@/context/auth-context";
 function ChatApp() {
   const { isOpen, setIsOpen } = useSidebarContext();
   const isMobile = useIsMobile();
-  const { createNewChat, currentChat, chats } = useChat();
+  const { currentChat, chats } = useChat();
   const { user, loading } = useAuth();
   const router = useRouter();
 

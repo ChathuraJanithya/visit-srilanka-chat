@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loading]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
