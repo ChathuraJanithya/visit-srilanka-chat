@@ -5,21 +5,24 @@ import { createContext, useContext, useState, useEffect } from "react";
 import type { ChatMessage, ChatSession } from "@/types/chat";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/auth-context";
+import { processChatMessage } from "@/app/actions/chat";
 
 interface ChatContextProps {
   chats: ChatSession[];
   currentChat: ChatSession | null;
   isTyping: boolean;
   loading: boolean;
+  conversationIds: Record<string, string>; // Map chat IDs to conversation IDs
   setCurrentChat: (chat: ChatSession | null) => void;
   createNewChat: () => Promise<ChatSession | null>;
   addMessageToChat: (
     chatId: string,
     message: Omit<ChatMessage, "id" | "timestamp">
   ) => Promise<void>;
-  generateBotResponse: (chatId: string, userMessage: string) => void;
+  generateBotResponse: (chatId: string, userMessage: string) => Promise<void>;
   deleteChat: (chatId: string) => Promise<void>;
   loadChats: () => Promise<void>;
+  resetConversation: (chatId: string) => void;
 }
 
 const ChatContext = createContext<ChatContextProps | undefined>(undefined);
@@ -29,6 +32,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [currentChat, setCurrentChat] = useState<ChatSession | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [conversationIds, setConversationIds] = useState<
+    Record<string, string>
+  >({});
   const { user } = useAuth();
 
   // Load chats from Supabase
@@ -40,45 +46,53 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      // Fetch chats with their messages
+      // First fetch chats
       const { data: chatsData, error: chatsError } = await supabase
         .from("chats")
-        .select(
-          `
-          id,
-          title,
-          created_at,
-          messages (
-            id,
-            content,
-            role,
-            created_at
-          )
-        `
-        )
+        .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (chatsError) throw chatsError;
 
-      const formattedChats: ChatSession[] = chatsData.map((chat: any) => ({
-        id: chat.id,
-        title: chat.title,
-        createdAt: new Date(chat.created_at),
-        messages: chat.messages
-          .map((msg: any) => ({
-            id: msg.id,
-            content: msg.content,
-            role: msg.role,
-            timestamp: new Date(msg.created_at),
-          }))
-          .sort(
-            (a: any, b: any) =>
-              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          ),
-      }));
+      // Then fetch messages for each chat
+      const chatsWithMessages = await Promise.all(
+        chatsData.map(async (chat: any) => {
+          const { data: messagesData, error: messagesError } = await supabase
+            .from("messages")
+            .select("*")
+            .eq("chat_id", chat.id)
+            .order("created_at", { ascending: true });
 
-      setChats(formattedChats);
+          if (messagesError) {
+            console.error(
+              "Error loading messages for chat:",
+              chat.id,
+              messagesError
+            );
+            return {
+              id: chat.id,
+              title: chat.title,
+              createdAt: new Date(chat.created_at),
+              messages: [],
+            };
+          }
+
+          return {
+            id: chat.id,
+            title: chat.title,
+            createdAt: new Date(chat.created_at),
+            messages: messagesData.map((msg: any) => ({
+              id: msg.id,
+              content: msg.content,
+              role: msg.role,
+              timestamp: new Date(msg.created_at),
+            })),
+          };
+        })
+      );
+
+      setChats(chatsWithMessages);
     } catch (error) {
       console.error("Error loading chats:", error);
     } finally {
@@ -91,11 +105,23 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     loadChats();
   }, [user]);
 
+  // Reset conversation for a specific chat
+  const resetConversation = (chatId: string) => {
+    setConversationIds((prev) => {
+      const updated = { ...prev };
+      delete updated[chatId];
+      return updated;
+    });
+    console.log(`Reset conversation for chat: ${chatId}`);
+  };
+
   // Create a new chat
   const createNewChat = async (): Promise<ChatSession | null> => {
     if (!user) return null;
 
     try {
+      console.log("Creating new chat for user:", user.id);
+
       const { data: chatData, error: chatError } = await supabase
         .from("chats")
         .insert({
@@ -105,37 +131,23 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         .select()
         .single();
 
-      if (chatError) throw chatError;
+      if (chatError) {
+        console.error("Error creating chat:", chatError);
+        throw chatError;
+      }
 
-      // Create welcome message
-      const { data: messageData, error: messageError } = await supabase
-        .from("messages")
-        .insert({
-          chat_id: chatData.id,
-          content: "Hello! How can I help you today?",
-          role: "assistant",
-        })
-        .select()
-        .single();
-
-      if (messageError) throw messageError;
+      console.log("Chat created successfully:", chatData);
 
       const newChat: ChatSession = {
         id: chatData.id,
         title: chatData.title,
         createdAt: new Date(chatData.created_at),
-        messages: [
-          {
-            id: messageData.id,
-            content: messageData.content,
-            role: messageData.role as "user" | "assistant",
-            timestamp: new Date(messageData.created_at),
-          },
-        ],
+        messages: [],
       };
 
       setChats((prevChats) => [newChat, ...prevChats]);
       setCurrentChat(newChat);
+      // Don't set conversation ID yet - it will be created with the first message
       return newChat;
     } catch (error) {
       console.error("Error creating chat:", error);
@@ -223,20 +235,74 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Generate a bot response
-  const generateBotResponse = (chatId: string, userMessage: string) => {
+  // Generate a bot response using the real API
+  const generateBotResponse = async (chatId: string, userMessage: string) => {
     setIsTyping(true);
 
-    // Simulate typing delay
-    setTimeout(() => {
-      const botResponse: Omit<ChatMessage, "id" | "timestamp"> = {
-        content: `I'm an AI assistant here to help you. Your message was: ${userMessage}`,
-        role: "assistant",
-      };
+    try {
+      console.log("Generating bot response for:", userMessage);
+      console.log(
+        "Current conversation ID for chat:",
+        chatId,
+        "->",
+        conversationIds[chatId]
+      );
 
-      addMessageToChat(chatId, botResponse);
+      // Get the conversation ID for this chat (if any)
+      const currentConversationId = conversationIds[chatId];
+
+      // Use the Server Action to process the chat message
+      const result = await processChatMessage(
+        chatId,
+        userMessage,
+        currentConversationId
+      );
+
+      console.log("API Response:", result);
+
+      if (result.success && result.response) {
+        // Update conversation ID if provided
+        if (result.conversationId) {
+          setConversationIds((prev) => ({
+            ...prev,
+            [chatId]: result.conversationId!,
+          }));
+          console.log(
+            "Updated conversation ID for chat:",
+            chatId,
+            "->",
+            result.conversationId
+          );
+        }
+
+        // Add the AI response to the database
+        await addMessageToChat(chatId, {
+          content: result.response,
+          role: "assistant",
+        });
+      } else {
+        // Handle error case
+        console.error("API Error:", result.error);
+
+        await addMessageToChat(chatId, {
+          content:
+            result.error ||
+            "Sorry, I encountered an error while processing your message.",
+          role: "assistant",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating bot response:", error);
+
+      // Add error message to chat
+      await addMessageToChat(chatId, {
+        content:
+          "Sorry, I encountered an error while processing your message. Please try again.",
+        role: "assistant",
+      });
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
   // Delete a chat
@@ -255,6 +321,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       // Update local state
       setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId));
 
+      // Clear conversation ID for this chat
+      setConversationIds((prev) => {
+        const updated = { ...prev };
+        delete updated[chatId];
+        return updated;
+      });
+
       // Clear current chat if it was deleted
       if (currentChat?.id === chatId) {
         setCurrentChat(null);
@@ -271,12 +344,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         currentChat,
         isTyping,
         loading,
+        conversationIds,
         setCurrentChat,
         createNewChat,
         addMessageToChat,
         generateBotResponse,
         deleteChat,
         loadChats,
+        resetConversation,
       }}
     >
       {children}
