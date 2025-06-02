@@ -1,5 +1,6 @@
-import type { ChatMessage } from "@/types/chat";
 import { cn } from "@/lib/utils";
+import type { ChatMessage } from "@/types/chat";
+import Markdown from "react-markdown";
 
 interface ChatMessageProps {
   message: ChatMessage;
@@ -23,11 +24,14 @@ export function ChatMessageItem({ message }: ChatMessageProps) {
             : "bg-muted rounded-tl-none"
         )}
       >
-        {message.content.split("\n").map((line, i) => (
+        {/*  {message.content.split("\n").map((line, i) => (
           <p key={i} className="whitespace-pre-wrap text-sm sm:text-base">
             {line}
           </p>
-        ))}
+        ))} */}
+        <Markdown className="whitespace-pre-wrap text-sm sm:text-base">
+          {message.content}
+        </Markdown>
       </div>
     </div>
   );
