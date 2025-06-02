@@ -145,28 +145,30 @@ export function ChatSidebar() {
           </SidebarMenu>
         )}
       </SidebarContent>
-      <SidebarFooter className="p-4 bg-sidebar-accent/50 backdrop-blur-sm transition-colors duration-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-purple-600 text-white">
-                {user.email?.charAt(0).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="font-medium text-sm truncate max-w-[120px]">
-                {user.user_metadata?.full_name || user.email}
-              </span>
-              <span className="text-xs text-muted-foreground truncate max-w-[120px]">
-                {user.email}
-              </span>
+      {isOpen && (
+        <SidebarFooter className="p-4 bg-sidebar-accent/50 backdrop-blur-sm transition-colors duration-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-purple-600 text-white">
+                  {user.email?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-medium text-sm truncate max-w-[120px]">
+                  {user.user_metadata?.full_name || user.email}
+                </span>
+                <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                  {user.email}
+                </span>
+              </div>
             </div>
+            <Button variant="ghost" size="icon">
+              <ChevronDown className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="ghost" size="icon">
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </div>
-      </SidebarFooter>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }

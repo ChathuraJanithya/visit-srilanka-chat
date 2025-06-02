@@ -116,12 +116,14 @@ export function ChatCanvas() {
       <div className="flex flex-1 flex-col h-[calc(100vh-3.5rem)] relative">
         <div className="flex-1 overflow-auto p-4 md:px-8 pb-2 scroll-smooth">
           <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center">
-            <h2 className="text-2xl font-semibold">Welcome to AI Chat</h2>
-            <p className="text-muted-foreground mt-2">
+            <h2 className="text-2xl font-semibold">
+              Welcome to Visit Sri lanka AI Chat
+            </h2>
+            {/*  <p className="text-muted-foreground mt-2">
               Start a new chat or select an existing one
-            </p>
+            </p> */}
 
-            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 w-full max-w-2xl">
+            {/* <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 w-full max-w-2xl">
               <Button
                 variant="default"
                 className="h-auto justify-start p-4 text-left"
@@ -139,7 +141,7 @@ export function ChatCanvas() {
                 </div>
               </Button>
 
-              {suggestions.map((suggestion, index) => (
+               {suggestions.map((suggestion, index) => (
                 <Button
                   key={index}
                   variant="outline"
@@ -164,6 +166,9 @@ export function ChatCanvas() {
                   </div>
                 </Button>
               ))}
+            </div> */}
+            <div className="flex items-center justify-center p-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
           </div>
         </div>
