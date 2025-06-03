@@ -218,7 +218,7 @@ export function ChatCanvas() {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={1}
-                disabled={isTyping}
+                disabled={isTyping || !currentChat}
                 autoFocus={!isTyping}
               />
               <div className="absolute bottom-1 right-1 flex items-center gap-2">

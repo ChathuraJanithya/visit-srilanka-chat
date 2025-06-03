@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { ChatHeader } from "@/components/chat-header";
 import { ChatCanvas } from "@/components/chat-canvas";
@@ -15,9 +15,14 @@ import { useAuth } from "@/context/auth-context";
 function ChatApp() {
   const { isOpen, setIsOpen } = useSidebarContext();
   const isMobile = useIsMobile();
-  const { currentChat, chats } = useChat();
+  const { currentChat, chats, loading: chatLoading, createNewChat } = useChat();
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Use refs to prevent multiple redirects and chat creations
+  const hasRedirected = useRef(false);
+  const isCreatingNewChat = useRef(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -26,12 +31,57 @@ function ChatApp() {
     }
   }, [user, loading, router]);
 
-  // If there are chats but no current chat is selected, redirect to the first chat
+  // Handle chat navigation logic
   useEffect(() => {
-    if (user && chats.length > 0 && !currentChat) {
-      router.push(`/chat/${chats[0].id}`);
+    // Don't do anything if user is not authenticated or still loading
+    if (!user || loading || chatLoading) return;
+
+    // Reset redirect flag when pathname changes
+    if (hasRedirected.current && pathname !== "/") {
+      hasRedirected.current = false;
     }
-  }, [chats, currentChat, router, user]);
+
+    // If we're on the root page and have a current chat, redirect to it
+    if (pathname === "/" && currentChat && !hasRedirected.current) {
+      console.log("Redirecting to current chat:", currentChat.id);
+      hasRedirected.current = true;
+      router.replace(`/chat/${currentChat.id}`);
+      return;
+    }
+
+    // If we have chats but no current chat is selected, redirect to the first chat
+    if (chats.length > 0 && !currentChat && !hasRedirected.current) {
+      console.log("Redirecting to first chat:", chats[0].id);
+      hasRedirected.current = true;
+      router.replace(`/chat/${chats[0].id}`);
+      return;
+    }
+
+    // If there are no chats and we're on root, create a new chat
+    if (
+      chats.length === 0 &&
+      pathname === "/" &&
+      !isCreatingNewChat.current &&
+      !hasRedirected.current
+    ) {
+      console.log("No chats found, creating new chat");
+      isCreatingNewChat.current = true;
+      hasRedirected.current = true;
+
+      createNewChat().finally(() => {
+        isCreatingNewChat.current = false;
+      });
+    }
+  }, [
+    chats,
+    currentChat,
+    pathname,
+    user,
+    loading,
+    chatLoading,
+    router,
+    createNewChat,
+  ]);
 
   // Add swipe gestures for mobile
   const { handlers } = useSwipe({

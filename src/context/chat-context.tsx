@@ -1,11 +1,12 @@
 "use client";
 
 import type React from "react";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { ChatMessage, ChatSession } from "@/types/chat";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/auth-context";
 import { processChatMessage } from "@/app/actions/chat";
+import { useRouter } from "next/navigation";
 
 interface ChatContextProps {
   chats: ChatSession[];
@@ -36,16 +37,24 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     Record<string, string>
   >({});
   const { user } = useAuth();
+  const router = useRouter();
+
+  // Use refs to prevent multiple chat creation
+  const isCreatingChat = useRef(false);
+  const hasInitializedChats = useRef(false);
 
   // Load chats from Supabase
   const loadChats = async () => {
     if (!user) {
       setChats([]);
       setLoading(false);
+      hasInitializedChats.current = false;
       return;
     }
 
     try {
+      setLoading(true);
+
       // First fetch chats
       const { data: chatsData, error: chatsError } = await supabase
         .from("chats")
@@ -93,8 +102,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       );
 
       setChats(chatsWithMessages);
+      hasInitializedChats.current = true;
     } catch (error) {
       console.error("Error loading chats:", error);
+      hasInitializedChats.current = true;
     } finally {
       setLoading(false);
     }
@@ -102,8 +113,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   // Load chats when user changes
   useEffect(() => {
-    loadChats();
-  }, [user]);
+    if (user) {
+      loadChats();
+    } else {
+      // Reset state when user logs out
+      setChats([]);
+      setCurrentChat(null);
+      setLoading(false);
+      hasInitializedChats.current = false;
+    }
+  }, [user?.id]); // Use user.id instead of user to prevent unnecessary re-renders
 
   // Reset conversation for a specific chat
   const resetConversation = (chatId: string) => {
@@ -117,7 +136,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   // Create a new chat
   const createNewChat = async (): Promise<ChatSession | null> => {
-    if (!user) return null;
+    if (!user || isCreatingChat.current) return null;
+
+    // Prevent multiple chat creation
+    isCreatingChat.current = true;
 
     try {
       console.log("Creating new chat for user:", user.id);
@@ -147,11 +169,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       setChats((prevChats) => [newChat, ...prevChats]);
       setCurrentChat(newChat);
-      // Don't set conversation ID yet - it will be created with the first message
+
+      // Use replace instead of push to avoid navigation issues
+      router.replace(`/chat/${newChat.id}`);
       return newChat;
     } catch (error) {
       console.error("Error creating chat:", error);
       return null;
+    } finally {
+      isCreatingChat.current = false;
     }
   };
 
@@ -318,8 +344,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
 
+      // Get remaining chats before updating state
+      const remainingChats = chats.filter((chat) => chat.id !== chatId);
+      const deletedChat = chats.find((chat) => chat.id === chatId);
+
       // Update local state
-      setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId));
+      setChats(remainingChats);
 
       // Clear conversation ID for this chat
       setConversationIds((prev) => {
@@ -328,10 +358,37 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         return updated;
       });
 
-      // Clear current chat if it was deleted
-      if (currentChat?.id === chatId) {
-        setCurrentChat(null);
+      // Handle navigation after deletion
+      /*  if (currentChat?.id === chatId) {
+        if (remainingChats.length > 0) {
+          // Find the next chat to navigate to
+          const nextChat = deletedChat
+            ? remainingChats.find(
+                (chat) => chat.createdAt < deletedChat.createdAt
+              ) || remainingChats[0]
+            : remainingChats[0];
+
+          setCurrentChat(nextChat);
+          router.replace(`/chat/${nextChat.id}`);
+        } else {
+          // No chats remaining, go to home and create new chat
+          setCurrentChat(null);
+          router.replace("/");
+        }
+      } */
+
+      if (remainingChats.length > 0) {
+        // If there are remaining chats, set the first one as current
+        setCurrentChat(remainingChats[0]);
+        router.replace(`/chat/${remainingChats[0].id}`);
+      } else {
+        const newChat = await createNewChat();
+        if (newChat) {
+          setCurrentChat(newChat);
+          router.replace(`/chat/${newChat.id}`);
+        }
       }
+      console.log("Chat deleted successfully:", chatId);
     } catch (error) {
       console.error("Error deleting chat:", error);
     }

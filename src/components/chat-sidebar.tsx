@@ -38,26 +38,22 @@ export function ChatSidebar() {
   };
 
   const handleNewChat = async () => {
-    const newChat = await createNewChat();
-    if (newChat) {
+    //const newChat = await createNewChat();
+    await createNewChat();
+    /*  if (newChat) {
       router.push(`/chat/${newChat.id}`);
 
       // Close sidebar on mobile after creating new chat
       if (isMobile) {
         setIsOpen(false);
       }
-    }
+    } */
   };
 
   const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm("Are you sure you want to delete this chat?")) {
       await deleteChat(chatId);
-
-      // If we deleted the current chat, redirect to home
-      if (currentChat?.id === chatId) {
-        router.push("/");
-      }
     }
   };
 
